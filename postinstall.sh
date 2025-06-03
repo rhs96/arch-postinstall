@@ -158,7 +158,7 @@ final_message() {
 
 # Execução do script
 main() {
-  is_chroot && {
+  if is_chroot; then
     section "Modo: Chroot"
     install_packages base-devel git
     install_paru
@@ -172,7 +172,29 @@ main() {
     configure_pacman
     configure_sudoers
     configure_config_files
-    configure_x
-::contentReference[oaicite:13]{index=13}
-	}
+    configure_xinitrc
+    configure_bashrc
+    install_dev_tools
+    final_message
+  else
+    section "Modo: Usuário comum logado"
+    install_paru
+    install_apps
+    install_pipewire_bluetooth
+    install_codecs
+    install_amd_drivers
+    install_leftwm
+    install_lunarvim
+    install_xpadneo
+    configure_pacman
+    configure_sudoers
+    configure_config_files
+    configure_xinitrc
+    configure_bashrc
+    install_dev_tools
+    final_message
+  fi
 }
+
+main
+
