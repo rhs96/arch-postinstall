@@ -1,200 +1,234 @@
 #!/bin/bash
-
 set -euo pipefail
+shopt -s nullglob
 
-# Função para exibir seções
-section() {
-  echo
-  echo "===> $1"
-  echo "----------------------------------------------"
+LOG_FILE="$HOME/install_arch.log"
+VERBOSE=1
+SUDOERS_TMP="/etc/sudoers.d/pacman_nopasswd_tmp"
+
+USER_HOME=$(eval echo "~$USER")
+CONFIG_SRC_DIR="./default_configs" # pasta com configs default do repo/script (ajuste se precisar)
+
+log() {
+  local level="$1"
+  shift
+  case "$level" in
+    ERROR) echo "[$(date +'%F %T')] ERROR: $*" | tee -a "$LOG_FILE" >&2 ;;
+    WARN)  [[ $VERBOSE -ge 1 ]] && echo "[$(date +'%F %T')] WARN: $*" | tee -a "$LOG_FILE" ;;
+    INFO)  [[ $VERBOSE -ge 1 ]] && echo "[$(date +'%F %T')] INFO: $*" | tee -a "$LOG_FILE" ;;
+    DEBUG) [[ $VERBOSE -ge 2 ]] && echo "[$(date +'%F %T')] DEBUG: $*" | tee -a "$LOG_FILE" ;;
+    *) echo "[$(date +'%F %T')] LOG: $*" | tee -a "$LOG_FILE" ;;
+  esac
 }
 
-# Função para verificar se estamos no chroot
-is_chroot() {
-  if [ -f /etc/arch-release ]; then
-    echo "Modo: Chroot"
-    return 0
-  else
-    echo "Modo: Usuário Logado"
-    return 1
+section() {
+  echo
+  echo "==== $* ===="
+  echo
+}
+
+enable_nopasswd_pacman() {
+  log INFO "Ativando sudo sem senha para pacman durante o script"
+  echo "$USER ALL=(ALL) NOPASSWD: /usr/bin/pacman" | sudo tee "$SUDOERS_TMP" >/dev/null
+  sudo chmod 440 "$SUDOERS_TMP"
+}
+
+disable_nopasswd_pacman() {
+  if [[ -f "$SUDOERS_TMP" ]]; then
+    log INFO "Removendo sudo sem senha para pacman (restaurando padrão)"
+    sudo rm -f "$SUDOERS_TMP"
   fi
 }
 
-# Função para instalar pacotes
+trap disable_nopasswd_pacman EXIT
+
+is_installed() {
+  local pkg="$1"
+  pacman -Qs "^$pkg$" &>/dev/null || paru -Qs "^$pkg$" &>/dev/null
+}
+
+ensure_paru() {
+  if ! command -v paru &>/dev/null; then
+    section "Instalando paru (AUR helper)"
+    install_packages base-devel git
+    if [[ ! -d "/tmp/paru" ]]; then
+      git clone https://aur.archlinux.org/paru.git /tmp/paru | tee -a "$LOG_FILE"
+    fi
+    pushd /tmp/paru
+    makepkg -si --noconfirm | tee -a "$LOG_FILE"
+    popd
+  else
+    section "Paru já instalado"
+  fi
+}
+
 install_packages() {
-  local packages=("$@")
-  section "Instalando pacotes: ${packages[*]}"
-  sudo pacman -S --needed --noconfirm "${packages[@]}"
+  local pacman_pkgs=()
+  local paru_pkgs=()
+
+  for pkg in "$@"; do
+    if is_installed "$pkg"; then
+      log INFO "Pacote já instalado: $pkg"
+      continue
+    fi
+
+    if pacman -Si "$pkg" &>/dev/null; then
+      pacman_pkgs+=("$pkg")
+    else
+      paru_pkgs+=("$pkg")
+    fi
+  done
+
+  if (( ${#pacman_pkgs[@]} )); then
+    log INFO "Instalando via pacman: ${pacman_pkgs[*]}"
+    sudo pacman -S --needed --noconfirm "${pacman_pkgs[@]}"
+  fi
+
+  if (( ${#paru_pkgs[@]} )); then
+    ensure_paru
+    log INFO "Instalando via paru (AUR): ${paru_pkgs[*]}"
+    paru -S --needed --noconfirm "${paru_pkgs[@]}"
+  fi
 }
 
-# Função para configurar pacman.conf
-configure_pacman() {
-  section "Configurando pacman.conf"
-  sudo sed -i '/\[options\]/a ParallelDownloads = 5' /etc/pacman.conf
+install_codecs() {
+  section "Instalando codecs de áudio e vídeo"
+  install_packages gst-libav gst-plugins-good gst-plugins-ugly ffmpeg
 }
 
-# Função para configurar sudoers
-configure_sudoers() {
-  section "Configurando sudoers"
-  echo 'Defaults        pwfeedback' | sudo tee /etc/sudoers.d/0pwfeedback
+install_amd_drivers() {
+  section "Instalando drivers AMD"
+  install_packages xf86-video-amdgpu mesa vulkan-radeon lib32-mesa lib32-vulkan-radeon
 }
 
-# Função para configurar arquivos de configuração padrão
-configure_dotfiles() {
-  section "Configurando arquivos de configuração padrão"
-  mkdir -p ~/.config/{leftwm,alacritty,yazi,dmenu}
-  # Adicione aqui os arquivos de configuração padrão para cada aplicativo
+install_bluetooth() {
+  section "Configurando Bluetooth"
+  install_packages bluez bluez-utils bluez-libs
+  # habilitar serviços bluetooth
+  sudo systemctl enable bluetooth.service
+  sudo systemctl start bluetooth.service
 }
 
-# Função para instalar ferramentas de desenvolvimento
-install_dev_tools() {
-  section "Instalando ferramentas de desenvolvimento"
-  install_packages go rust nodejs python python-pip
-  install_packages libreoffice-fresh
-}
-
-# Função para instalar LeftWM e tema Catppuccin Mocha
 install_leftwm() {
-  section "Instalando LeftWM e tema Catppuccin Mocha"
-  install_packages leftwm
-  paru -S --noconfirm leftwm-theme-git
-  leftwm-theme install catppuccin-mocha
-  leftwm-theme load catppuccin-mocha
+  section "Instalando LeftWM, leftwm-utils e tema Catppuccin Mocha"
+  install_packages leftwm leftwm-utils leftwm-theme-catppuccin-mocha
+
+  if command -v leftwm-theme &>/dev/null; then
+    leftwm-theme load catppuccin-mocha || log WARN "Falha ao carregar tema Catppuccin Mocha"
+  else
+    log WARN "leftwm-theme não encontrado para carregar tema"
+  fi
 }
 
-# Função para configurar .xinitrc
+install_lunarvim() {
+  section "Instalando LunarVim"
+  install_packages neovim
+  if ! command -v lvim &>/dev/null; then
+    LV_BRANCH='release-1.3/neovim-0.9' bash <(curl -s https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh)
+  else
+    log INFO "LunarVim já instalado"
+  fi
+}
+
+configure_pacman() {
+  section "Configurando pacman (parallel downloads)"
+  local pacman_conf="/etc/pacman.conf"
+  sudo cp "$pacman_conf" "${pacman_conf}.bak"  # backup
+
+  # Ajustar ParallelDownloads para 5 (cria se não existir)
+  if sudo grep -q "^ParallelDownloads" "$pacman_conf"; then
+    sudo sed -i 's/^ParallelDownloads.*/ParallelDownloads = 5/' "$pacman_conf"
+  else
+    sudo sed -i '/\[options\]/a ParallelDownloads = 5' "$pacman_conf"
+  fi
+}
+
+configure_sudoers() {
+  section "Configurando sudoers para mostrar **** na senha"
+  local sudoers_file="/etc/sudoers"
+  sudo cp "$sudoers_file" "${sudoers_file}.bak" # backup
+
+  # Procura a linha com pwfeedback (não é criada por padrão no Arch)
+  if sudo grep -q "Defaults.*pwfeedback" "$sudoers_file"; then
+    log INFO "pwfeedback já está habilitado no sudoers"
+  else
+    # Adiciona a opção para mostrar **** ao digitar senha
+    echo "Defaults pwfeedback" | sudo tee -a "$sudoers_file"
+  fi
+}
+
+copy_default_configs() {
+  section "Copiando configs padrão para o usuário"
+
+  # Exemplo: configs típicas no ./default_configs para cada app
+  # Ajuste os caminhos conforme sua estrutura de configs default
+
+  local configs=(
+    "leftwm"
+    "alacritty"
+    "yazi"
+    "dmenu"
+    "lvim"
+  )
+
+  for cfg in "${configs[@]}"; do
+    local src_dir="$CONFIG_SRC_DIR/$cfg"
+    local dest_dir="$USER_HOME/.config/$cfg"
+    if [[ -d "$src_dir" ]]; then
+      mkdir -p "$dest_dir"
+      cp -rT "$src_dir" "$dest_dir"
+      log INFO "Configurações copiadas para $dest_dir"
+    else
+      log WARN "Config padrão não encontrada: $src_dir"
+    fi
+  done
+}
+
 configure_xinitrc() {
-  section "Configurando .xinitrc"
-  cat > ~/.xinitrc <<EOF
+  section "Configurando .xinitrc para iniciar LeftWM"
+
+  local xinitrc="$USER_HOME/.xinitrc"
+  # Backup
+  if [[ -f "$xinitrc" ]]; then
+    cp "$xinitrc" "$xinitrc.bak"
+  fi
+
+  cat > "$xinitrc" << EOF
 #!/bin/sh
 exec leftwm
 EOF
-  chmod +x ~/.xinitrc
+
+  chmod +x "$xinitrc"
+  log INFO ".xinitrc configurado para iniciar LeftWM"
 }
 
-# Função para configurar .bashrc
-configure_bashrc() {
-  section "Configurando .bashrc"
-  if ! grep -q "startx" ~/.bashrc; then
-    echo 'alias startx="startx ~/.xinitrc"' >> ~/.bashrc
-  fi
-}
-
-# Função para instalar Paru (AUR helper)
-install_paru() {
-  section "Instalando Paru (AUR helper)"
-  git clone https://aur.archlinux.org/paru.git /tmp/paru
-  cd /tmp/paru
-  makepkg -si --noconfirm
-  cd ~
-}
-
-# Função para instalar LunarVim
-install_lunarvim() {
-  section "Instalando LunarVim"
-  LV_BRANCH='release-1.4/neovim-0.9' bash <(curl -s https://raw.githubusercontent.com/LunarVim/LunarVim/master/utils/installer/install.sh)
-}
-
-# Função para instalar driver xpadneo para controle Xbox
-install_xpadneo() {
-  section "Instalando driver xpadneo para controle Xbox"
-  sudo pacman -S --needed --noconfirm dkms linux-headers
-  git clone https://github.com/atar-axis/xpadneo.git /tmp/xpadneo
-  cd /tmp/xpadneo
-  sudo ./install.sh
-  cd ~
-}
-
-# Função para instalar Firefox, Alacritty, Yazi, Dmenu
-install_apps() {
-  section "Instalando Firefox, Alacritty, Yazi, Dmenu"
-  install_packages firefox alacritty yazi dmenu
-}
-
-# Função para instalar PipeWire e Bluetooth
-install_pipewire_bluetooth() {
-  section "Instalando PipeWire e Bluetooth"
-  install_packages pipewire pipewire-alsa pipewire-pulse wireplumber bluez bluez-utils bluetuith
-  sudo systemctl enable --now pipewire-pulse
-  sudo systemctl enable --now wireplumber
-  sudo systemctl enable --now bluetooth
-}
-
-# Função para instalar codecs de áudio e vídeo
-install_codecs() {
-  section "Instalando codecs de áudio e vídeo"
-  install_packages gst-libav gst-plugins-good gst-plugins-bad gst-plugins-ugly ffmpeg
-}
-
-# Função para instalar drivers AMD
-install_amd_drivers() {
-  section "Instalando drivers para AMD RX 580"
-  install_packages mesa lib32-mesa xf86-video-amdgpu vulkan-radeon lib32-vulkan-radeon
-}
-
-# Função para configurar arquivos de configuração padrão
-configure_config_files() {
-  section "Configurando arquivos de configuração padrão"
-  # Adicione aqui os arquivos de configuração padrão para cada aplicativo
-}
-
-# Função para configurar sudoers
-configure_sudoers() {
-  section "Configurando sudoers"
-  echo 'Defaults        pwfeedback' | sudo tee /etc/sudoers.d/0pwfeedback
-}
-
-# Função para configurar pacman.conf
-configure_pacman() {
-  section "Configurando pacman.conf"
-  sudo sed -i '/\[options\]/a ParallelDownloads = 5' /etc/pacman.conf
-}
-
-# Função para exibir mensagem final
-final_message() {
-  section "Instalação concluída!"
-  echo "Reinicie o sistema e digite 'startx' para iniciar o ambiente com LeftWM e tema Catppuccin Mocha."
-}
-
-# Execução do script
 main() {
-  if is_chroot; then
-    section "Modo: Chroot"
-    install_packages base-devel git
-    install_paru
-    install_apps
-    install_pipewire_bluetooth
-    install_codecs
-    install_amd_drivers
-    install_leftwm
-    install_lunarvim
-    install_xpadneo
-    configure_pacman
-    configure_sudoers
-    configure_config_files
-    configure_xinitrc
-    configure_bashrc
-    install_dev_tools
-    final_message
-  else
-    section "Modo: Usuário comum logado"
-    install_paru
-    install_apps
-    install_pipewire_bluetooth
-    install_codecs
-    install_amd_drivers
-    install_leftwm
-    install_lunarvim
-    install_xpadneo
-    configure_pacman
-    configure_sudoers
-    configure_config_files
-    configure_xinitrc
-    configure_bashrc
-    install_dev_tools
-    final_message
-  fi
+  section "Início do script"
+
+  enable_nopasswd_pacman
+
+  # Instalar pacotes essenciais
+  install_packages \
+    base base-devel git \
+    firefox alacritty yazi xorg-server xorg-xinit \
+    pipewire pipewire-pulse pipewire-alsa pipewire-jack \
+    libnotify dmenu xclip xdotool \
+    go rust python nodejs npm \
+    libreoffice-fresh
+
+  install_codecs
+  install_amd_drivers
+  install_bluetooth
+  install_leftwm
+  install_lunarvim
+
+  configure_pacman
+  configure_sudoers
+  copy_default_configs
+  configure_xinitrc
+
+  log INFO "Script finalizado com sucesso!"
 }
 
-main
+main "$@"
 
