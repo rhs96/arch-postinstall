@@ -110,15 +110,41 @@ install_bluetooth() {
 }
 
 install_leftwm() {
-  section "Instalando LeftWM, leftwm-utils e tema Catppuccin Mocha"
-  install_packages leftwm leftwm-utils leftwm-theme-catppuccin-mocha
+    section "Instalando LeftWM e dependências"
 
-  if command -v leftwm-theme &>/dev/null; then
-    leftwm-theme load catppuccin-mocha || log WARN "Falha ao carregar tema Catppuccin Mocha"
-  else
-    log WARN "leftwm-theme não encontrado para carregar tema"
-  fi
+    # Instalar LeftWM e dependências
+    install_packages leftwm leftwm-theme-git
+
+    # Instalar tema desejado
+    if command -v leftwm-theme &>/dev/null; then
+        leftwm-theme install "Catppuccin Mocha" && \
+        leftwm-theme apply "Catppuccin Mocha" && \
+        log INFO "Tema Catppuccin Mocha aplicado com sucesso."
+    else
+        log WARN "leftwm-theme não encontrado. Tema não aplicado."
+    fi
+
+    # Configurar .xinitrc para iniciar LeftWM
+    local xinitrc="$USER_HOME/.xinitrc"
+    if ! grep -q "exec leftwm" "$xinitrc"; then
+        echo "exec leftwm" >> "$xinitrc"
+        log INFO "Adicionado 'exec leftwm' ao final de $xinitrc"
+    else
+        log INFO "Linha 'exec leftwm' já presente em $xinitrc"
+    fi
+
+    # Habilitar serviços necessários
+    sudo systemctl enable --now dbus.service
+    log INFO "Serviço dbus habilitado e iniciado."
+
+    # Verificar se o LeftWM foi instalado corretamente
+    if command -v leftwm &>/dev/null; then
+        log INFO "LeftWM instalado com sucesso."
+    else
+        log ERROR "Falha na instalação do LeftWM."
+    fi
 }
+
 
 install_lunarvim() {
   section "Instalando LunarVim"
@@ -231,4 +257,3 @@ main() {
 }
 
 main "$@"
-
