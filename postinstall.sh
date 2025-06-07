@@ -4,7 +4,6 @@ shopt -s nullglob
 
 LOG_FILE="$HOME/install_arch.log"
 VERBOSE=1
-SUDOERS_TMP="/etc/sudoers.d/pacman_nopasswd_tmp"
 
 USER_HOME=$(eval echo "~$USER")
 CONFIG_SRC_DIR="./default_configs" # pasta com configs default do repo/script (ajuste se precisar)
@@ -26,21 +25,6 @@ section() {
   echo "==== $* ===="
   echo
 }
-
-enable_nopasswd_pacman() {
-  log INFO "Ativando sudo sem senha para pacman durante o script"
-  echo "$USER ALL=(ALL) NOPASSWD: /usr/bin/pacman" | sudo tee "$SUDOERS_TMP" >/dev/null
-  sudo chmod 440 "$SUDOERS_TMP"
-}
-
-disable_nopasswd_pacman() {
-  if [[ -f "$SUDOERS_TMP" ]]; then
-    log INFO "Removendo sudo sem senha para pacman (restaurando padrão)"
-    sudo rm -f "$SUDOERS_TMP"
-  fi
-}
-
-trap disable_nopasswd_pacman EXIT
 
 is_installed() {
   local pkg="$1"
@@ -246,8 +230,6 @@ EOF
 
 main() {
   section "Início do script"
-
-  enable_nopasswd_pacman
 
   # Instalar pacotes essenciais
   install_packages \
