@@ -113,7 +113,24 @@ install_leftwm() {
     section "Instalando LeftWM e dependências"
 
     # Instalar LeftWM e dependências
-    install_packages leftwm leftwm-theme-git
+    install_packages leftwm leftwm-config leftwm-theme-git
+
+    # Verifica se a instalação foi bem-sucedida
+    if ! command -v leftwm &>/dev/null || ! command -v leftwm-config &>/dev/null; then
+        log ERROR "LeftWM ou leftwm-config não foi instalado corretamente."
+        return 1
+    fi
+
+    # Geração da configuração padrão com leftwm-config
+    log INFO "Gerando configuração padrão do LeftWM com leftwm-config"
+    leftwm-config generate --force
+
+    # Verifica se o arquivo principal de configuração foi criado
+    if [[ -f "$USER_HOME/.config/leftwm/config.ron" ]]; then
+        log INFO "Configuração padrão do LeftWM gerada com sucesso."
+    else
+        log ERROR "Falha ao gerar configuração padrão do LeftWM."
+    fi
 
     # Instalar tema desejado
     if command -v leftwm-theme &>/dev/null; then
@@ -144,7 +161,6 @@ install_leftwm() {
         log ERROR "Falha na instalação do LeftWM."
     fi
 }
-
 
 install_lunarvim() {
   section "Instalando LunarVim"
