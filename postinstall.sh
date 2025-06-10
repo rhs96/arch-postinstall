@@ -107,7 +107,7 @@ install_leftwm() {
 
     # Geração da configuração padrão com leftwm-config
     log INFO "Gerando configuração padrão do LeftWM com leftwm-config"
-    leftwm-config generate --force
+    leftwm-config --new
 
     # Verifica se o arquivo principal de configuração foi criado
     if [[ -f "$USER_HOME/.config/leftwm/config.ron" ]]; then
