@@ -97,7 +97,7 @@ install_leftwm() {
     section "Instalando LeftWM e dependências"
 
     # Instalar LeftWM e dependências
-    install_packages leftwm leftwm-config leftwm-theme-git
+    install_packages leftwm leftwm-config-git leftwm-theme-git
 
     # Verifica se a instalação foi bem-sucedida
     if ! command -v leftwm &>/dev/null || ! command -v leftwm-config &>/dev/null; then
