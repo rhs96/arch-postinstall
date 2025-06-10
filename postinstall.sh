@@ -234,11 +234,12 @@ main() {
   # Instalar pacotes essenciais
   install_packages \
     base base-devel git \
-    firefox alacritty yazi xorg-server xorg-xinit \
+    firefox zen-browser-bin alacritty yazi xorg-server xorg-xinit \
+    lsd bat arandr fastfetch \
     pipewire pipewire-pulse pipewire-alsa pipewire-jack \
     libnotify dmenu xclip xdotool \
     go rust python nodejs npm \
-    libreoffice-fresh
+    libreoffice-fresh   
 
   install_codecs
   install_amd_drivers
