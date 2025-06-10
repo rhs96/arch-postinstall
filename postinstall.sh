@@ -229,30 +229,94 @@ EOF
 }
 
 main() {
-  section "Início do script"
+  while true; do
+    echo "========== MENU DE INSTALAÇÃO =========="
+    echo "1) Instalação de Pacotes"
+    echo "2) Instalação de Codecs"
+    echo "3) Instalação de Drivers AMD"
+    echo "4) Instalação do Bluetooth"
+    echo "5) Instalação do LeftWM"
+    echo "6) Instalação do LunarVim"
+    echo "7) Configurações"
+    echo "8) Instalação Completa"
+    echo "9) Sair"
+    echo "========================================"
+    read -rp "Escolha uma opção [1-9]: " opt
 
-  # Instalar pacotes essenciais
-  install_packages \
-    base base-devel git \
-    firefox zen-browser-bin alacritty yazi xorg-server xorg-xinit \
-    lsd bat arandr fastfetch \
-    pipewire pipewire-pulse pipewire-alsa pipewire-jack \
-    libnotify dmenu xclip xdotool \
-    go rust python nodejs npm \
-    libreoffice-fresh   
+    case $opt in
+      1)
+        echo "Iniciando instalação de pacotes..."
+        install_packages \
+          base base-devel git \
+          firefox zen-browser-bin alacritty yazi xorg-server xorg-xinit \
+          lsd bat arandr fastfetch \
+          pipewire pipewire-pulse pipewire-alsa pipewire-jack \
+          libnotify dmenu xclip xdotool \
+          go rust python nodejs npm \
+          libreoffice-fresh
+        ;;
+      2)
+        echo "Iniciando instalação de codecs..."
+        install_codecs
+        ;;
+      3)
+        echo "Iniciando instalação de drivers AMD..."
+        install_amd_drivers
+        ;;
+      4)
+        echo "Iniciando instalação do Bluetooth..."
+        install_bluetooth
+        ;;
+      5)
+        echo "Iniciando instalação do LeftWM..."
+        install_leftwm
+        ;;
+      6)
+        echo "Iniciando instalação do LunarVim..."
+        install_lunarvim
+        ;;
+      7)
+        echo "Aplicando configurações..."
+        configure_pacman
+        configure_sudoers
+        copy_default_configs
+        configure_xinitrc
+        ;;
+      8)
+        echo "Iniciando instalação completa..."
+        install_packages \
+          base base-devel git \
+          firefox zen-browser-bin alacritty yazi xorg-server xorg-xinit \
+          lsd bat arandr fastfetch \
+          pipewire pipewire-pulse pipewire-alsa pipewire-jack \
+          libnotify dmenu xclip xdotool \
+          go rust python nodejs npm \
+          libreoffice-fresh
 
-  install_codecs
-  install_amd_drivers
-  install_bluetooth
-  install_leftwm
-  install_lunarvim
+        install_codecs
+        install_amd_drivers
+        install_bluetooth
+        install_leftwm
+        install_lunarvim
 
-  configure_pacman
-  configure_sudoers
-  copy_default_configs
-  configure_xinitrc
+        configure_pacman
+        configure_sudoers
+        copy_default_configs
+        configure_xinitrc
 
-  log INFO "Script finalizado com sucesso!"
+        log INFO "Script finalizado com sucesso!"
+        ;;
+      9)
+        echo "Saindo..."
+        break
+        ;;
+      *)
+        echo "Opção inválida. Tente novamente."
+        ;;
+    esac
+
+    echo "" # linha em branco entre execuções
+  done
 }
 
 main "$@"
