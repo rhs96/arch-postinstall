@@ -19,7 +19,8 @@
             "filesystem": {
               "format": "vfat"
             },
-            "part_type": "efi"
+            "part_type": "efi",
+            "status": "create"
           },
           {
             "mountpoint": "/",
@@ -43,7 +44,8 @@
                 "mount_options": "compress=zstd,noatime"
               }
             },
-            "mount_options": "compress=zstd,noatime"
+            "mount_options": "compress=zstd,noatime",
+            "status": "create"
           }
         ]
       }
