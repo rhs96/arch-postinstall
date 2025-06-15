@@ -24,7 +24,7 @@
             "@": "/",
             "@home": {
               "mountpoint": "/home",
-              "create": false,
+              "create": true,
               "mount_options": "compress=zstd,noatime"
             },
             "@snapshots": {
