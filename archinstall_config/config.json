@@ -1,16 +1,9 @@
 {
-  "locale": "en_US.UTF-8",
-  "keyboard_layout": "br-abnt2",
-  "mirror_region": "Brazil",
-  "timezone": "America/Sao_Paulo",
-  "hostname": "archlinux",
-  "bootloader": "systemd-bootctl",
-  "kernels": ["linux-zen", "linux-lts"],
-  "profile": "minimal",
-  "audio": "pipewire",
-  "network_configuration": {
-    "type": "dhcp"
-  },
+  "additional-repositories": [],
+  "archinstall-language": "en_US",
+  "audio_config": "pipewire",
+  "bootloader": "systemd-boot",
+  "debug": false,
   "disk_config": {
     "config_type": "manual_partitioning",
     "device_modifications": [
@@ -19,52 +12,52 @@
         "wipe": true,
         "partitions": [
           {
+            "btrfs": [],
+            "flags": ["boot"],
+            "fs_type": "fat32",
+            "length": {
+              "unit": "MB",
+              "value": 512
+            },
+            "mount_options": [],
             "mountpoint": "/boot",
-            "size": "512M",
-            "filesystem": {
-              "format": "vfat"
+            "start": {
+              "unit": "sectors",
+              "value": 2048
             },
             "status": "create",
-            "part_type": "efi",
-            "start": {
-              "value": 2048,
-              "unit": "sectors"
-            },
-            "sector_size": {
-              "value": 512,
-              "unit": "B"
-            }
+            "type": "primary"
           },
           {
+            "btrfs": [],
+            "flags": [],
+            "fs_type": "btrfs",
+            "length": {
+              "unit": "MB",
+              "value": 40960
+            },
+            "mount_options": ["compress=zstd", "noatime"],
             "mountpoint": "/",
-            "size": "100%",
-            "filesystem": {
-              "format": "btrfs"
+            "start": {
+              "unit": "sectors",
+              "value": 1050624
             },
             "status": "create",
-            "start": {
-              "value": 1050624,
-              "unit": "sectors"
-            },
-            "sector_size": {
-              "value": 512,
-              "unit": "B"
-            },
-            "mount_options": "compress=zstd,noatime",
+            "type": "primary",
             "btrfs_subvolumes": {
               "@": "/",
               "@home": {
                 "mountpoint": "/home",
                 "create": true,
-                "mount_options": "compress=zstd,noatime"
+                "mount_options": ["compress=zstd", "noatime"]
               },
               "@snapshots": {
                 "mountpoint": "/.snapshots",
-                "mount_options": "compress=zstd,noatime"
+                "mount_options": ["compress=zstd", "noatime"]
               },
               "@var_log": {
                 "mountpoint": "/var/log",
-                "mount_options": "compress=zstd,noatime"
+                "mount_options": ["compress=zstd", "noatime"]
               }
             }
           }
@@ -72,23 +65,40 @@
       }
     ]
   },
+  "hostname": "archlinux",
+  "kernels": ["linux-zen", "linux-lts"],
+  "locale_config": {
+    "kb_layout": "br-abnt2",
+    "sys_enc": "UTF-8",
+    "sys_lang": "en_US"
+  },
+  "mirror_config": {
+    "mirror_regions": {
+      "Brazil": [
+        "https://archlinux.c3sl.ufpr.br/archlinux/$repo/os/$arch"
+      ]
+    }
+  },
+  "network_config": {
+    "type": "dhcp"
+  },
+  "no_pkg_lookups": false,
+  "ntp": true,
+  "offline": false,
+  "packages": ["git"],
+  "parallel downloads": 4,
+  "profile_config": null,
+  "save_config": null,
+  "script": "guided",
+  "silent": false,
+  "swap": true,
+  "timezone": "America/Sao_Paulo",
+  "version": "3.0.8",
   "users": {
     "usuario": {
       "password": "senha123",
       "sudo": true,
       "shell": "/bin/bash"
     }
-  },
-  "additional_packages": [
-    "zram-generator",
-    "snapper",
-    "btrfs-progs",
-    "grub-btrfs",
-    "efibootmgr",
-    "git",
-    "htop",
-    "neovim",
-    "fastfetch"
-  ],
-  "install_reboot": false
+  }
 }
