@@ -8,19 +8,23 @@
   "kernels": ["linux-zen", "linux-lts"],
   "disk_config": {
     "/dev/sda": {
+      "type": "gpt",
       "wipe": true,
-      "partitions_type": "gpt",
-      "partitions": {
-        "efi": {
+      "partitions": [
+        {
           "mountpoint": "/boot",
           "size": "512M",
-          "filesystem": "vfat",
+          "filesystem": {
+            "format": "vfat"
+          },
           "part_type": "efi"
         },
-        "root": {
+        {
           "mountpoint": "/",
           "size": "100%",
-          "filesystem": "btrfs",
+          "filesystem": {
+            "format": "btrfs"
+          },
           "btrfs_subvolumes": {
             "@": "/",
             "@home": {
@@ -39,7 +43,7 @@
           },
           "mount_options": "compress=zstd,noatime"
         }
-      }
+      ]
     }
   },
   "users": {
