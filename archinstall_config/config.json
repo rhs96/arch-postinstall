@@ -7,8 +7,9 @@
   "bootloader": "systemd-bootctl",
   "kernels": ["linux-zen", "linux-lts"],
   "disk_config": {
-    "/dev/nvme0n1": {
+    "/dev/sda": {
       "wipe": true,
+      "partitions_type": "gpt",
       "partitions": {
         "efi": {
           "mountpoint": "/boot",
