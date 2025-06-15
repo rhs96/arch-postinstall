@@ -20,7 +20,11 @@
               "format": "vfat"
             },
             "part_type": "efi",
-            "status": "create"
+            "status": "create",
+            "start": {
+              "unit": "sectors",
+              "value": 2048
+            }
           },
           {
             "mountpoint": "/",
@@ -45,7 +49,11 @@
               }
             },
             "mount_options": "compress=zstd,noatime",
-            "status": "create"
+            "status": "create",
+            "start": {
+              "unit": "sectors",
+              "value": 1050624
+            }
           }
         ]
       }
