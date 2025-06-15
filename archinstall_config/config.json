@@ -1,0 +1,65 @@
+{
+  "locale": "en_US.UTF-8",
+  "keyboard_layout": "br-abnt2",
+  "mirror_region": "Brazil",
+  "timezone": "America/Sao_Paulo",
+  "hostname": "archlinux",
+  "bootloader": "systemd-bootctl",
+  "kernels": ["linux-zen", "linux-lts"],
+  "disk_config": {
+    "/dev/nvme0n1": {
+      "wipe": true,
+      "partitions": {
+        "efi": {
+          "mountpoint": "/boot",
+          "size": "512M",
+          "filesystem": "vfat",
+          "part_type": "efi"
+        },
+        "root": {
+          "mountpoint": "/",
+          "size": "100%",
+          "filesystem": "btrfs",
+          "btrfs_subvolumes": {
+            "@": "/",
+            "@home": {
+              "mountpoint": "/home",
+              "create": false,
+              "mount_options": "compress=zstd,noatime"
+            },
+            "@snapshots": {
+              "mountpoint": "/.snapshots",
+              "mount_options": "compress=zstd,noatime"
+            },
+            "@var_log": {
+              "mountpoint": "/var/log",
+              "mount_options": "compress=zstd,noatime"
+            }
+          },
+          "mount_options": "compress=zstd,noatime"
+        }
+      }
+    }
+  },
+  "users": {
+    "usuario": {
+      "password": "senha123",
+      "sudo": true,
+      "shell": "/bin/bash"
+    }
+  },
+  "profile": "minimal",
+  "audio": "pipewire",
+  "network_configuration": {
+    "type": "dhcp"
+  },
+  "additional_packages": [
+    "git",
+    "zram-generator",
+    "snapper",
+    "btrfs-progs",
+    "grub-btrfs",
+    "efibootmgr"
+  ],
+  "install_reboot": false
+}
