@@ -6,6 +6,11 @@
   "hostname": "archlinux",
   "bootloader": "systemd-bootctl",
   "kernels": ["linux-zen", "linux-lts"],
+  "profile": "minimal",
+  "audio": "pipewire",
+  "network_configuration": {
+    "type": "dhcp"
+  },
   "disk_config": {
     "config_type": "manual_partitioning",
     "device_modifications": [
@@ -19,11 +24,15 @@
             "filesystem": {
               "format": "vfat"
             },
-            "part_type": "efi",
             "status": "create",
+            "part_type": "efi",
             "start": {
-              "unit": "sectors",
-              "value": 2048
+              "value": 2048,
+              "unit": "sectors"
+            },
+            "sector_size": {
+              "value": 512,
+              "unit": "B"
             }
           },
           {
@@ -32,6 +41,16 @@
             "filesystem": {
               "format": "btrfs"
             },
+            "status": "create",
+            "start": {
+              "value": 1050624,
+              "unit": "sectors"
+            },
+            "sector_size": {
+              "value": 512,
+              "unit": "B"
+            },
+            "mount_options": "compress=zstd,noatime",
             "btrfs_subvolumes": {
               "@": "/",
               "@home": {
@@ -47,12 +66,6 @@
                 "mountpoint": "/var/log",
                 "mount_options": "compress=zstd,noatime"
               }
-            },
-            "mount_options": "compress=zstd,noatime",
-            "status": "create",
-            "start": {
-              "unit": "sectors",
-              "value": 1050624
             }
           }
         ]
@@ -66,18 +79,16 @@
       "shell": "/bin/bash"
     }
   },
-  "profile": "minimal",
-  "audio": "pipewire",
-  "network_configuration": {
-    "type": "dhcp"
-  },
   "additional_packages": [
-    "git",
     "zram-generator",
     "snapper",
     "btrfs-progs",
     "grub-btrfs",
-    "efibootmgr"
+    "efibootmgr",
+    "git",
+    "htop",
+    "neovim",
+    "fastfetch"
   ],
   "install_reboot": false
 }
