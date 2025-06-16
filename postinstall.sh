@@ -378,10 +378,14 @@ main() {
     case $opt in
       1)
         echo "Iniciando instalação de pacotes..."
+	grep -qxF 'eval "$(zoxide init bash)"' $HOME/.bashrc || echo 'eval "$(zoxide init bash)"' >> $HOME/.bashrc
+	grep -qxF '[ -f /usr/share/fzf/key-bindings.bash ] && source /usr/share/fzf/key-bindings.bash' ~/.bashrc || echo '[ -f /usr/share/fzf/key-bindings.bash ] && source /usr/share/fzf/key-bindings.bash' >> ~/.bashrc
+	grep -qxF '[ -f /usr/share/fzf/completion.bash ] && source /usr/share/fzf/completion.bash' ~/.bashrc || echo '[ -f /usr/share/fzf/completion.bash ] && source /usr/share/fzf/completion.bash' >> ~/.bashrc
+	source $HOME/.bashrc
         install_packages \
           base base-devel git curl sha256sum base64 \
-          firefox zen-browser-bin alacritty yazi xorg-server xorg-xinit jq \
-          lsd bat arandr fastfetch \
+          firefox zen-browser-bin alacritty wezterm yazi xorg-server xorg-xinit jq \
+          lsd bat arandr fastfetch zoxide fzf \
           pipewire pipewire-pulse pipewire-alsa pipewire-jack \
           libnotify dmenu xclip xdotool \
           go rust python nodejs npm \
