@@ -30,17 +30,7 @@ main() {
     read -rp "Escolha uma opção [1-9]: " opt
 
     case $opt in
-      1)
-        echo "Iniciando instalação de pacotes..."
-        install_packages \
-          base base-devel git curl sha256sum base64 \
-          firefox zen-browser-bin alacritty wezterm yazi xorg-server xorg-xinit jq \
-          lsd bat arandr fastfetch zoxide fzf \
-          pipewire pipewire-pulse pipewire-alsa pipewire-jack \
-          libnotify dmenu xclip xdotool \
-          go rust python nodejs npm \
-          libreoffice-fresh
-        ;;
+      1) install_main_packages ;;
       2) install_codecs ;;
       3) install_amd_drivers ;;
       4) install_bluetooth ;;
