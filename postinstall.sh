@@ -45,12 +45,15 @@ main() {
       8)
         install_packages \
           base base-devel git curl sha256sum base64 \
-          firefox zen-browser-bin alacritty wezterm yazi xorg-server xorg-xinit jq \
+          firefox zen-browser-bin alacritty zellij yazi xorg-server xorg-xinit jq \
           lsd bat arandr fastfetch zoxide fzf \
           pipewire pipewire-pulse pipewire-alsa pipewire-jack \
-          libnotify dmenu xclip xdotool \
-          go rust python nodejs npm \
-          libreoffice-fresh
+          libnotify dmenu xclip xdotool libvirt \
+          go rust python nodejs npm nvm docker docker-compose dbeaver\
+          libreoffice-fresh xdg-user-dirs \
+	  alsa-utils bash-completion discord flameshot lxappearance picom \
+	  ttf-cascadia-code-nerd ttf-cascadia-mono-nerd ttf-iosevka-nerd ttf-ubuntu-nerd ttf-ubuntu-mono-nerd \
+	  ttf-victor-mono-nerd apple-fonts \
 
         install_codecs
         install_amd_drivers
